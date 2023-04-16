@@ -1,0 +1,278 @@
+﻿
+@{
+    ViewBag.Pagina = "Consulta de Livros";
+    Layout = "~/Views/Shared/Layout.cshtml";
+}
+
+@section scripts{
+
+    <script>
+
+        var appLivro = angular.module('appLivro', []);
+
+        appLivro.controller('consultaLivro',
+            function ($scope, $http) {
+
+                //criando uma função para obter os autores..
+                $scope.consultarAutores = function () {
+                    $http.get('/Autor/ConsultarAutores')
+                        .then(function (d) { //sucesso
+                            $scope.autores = d.data;
+                        })
+                        .catch(function (e) { //erro
+                            $scope.mensagem = e.data; //mensagem de erro..
+                        });
+                };
+
+                //criando uma função para obter as editoras..
+                $scope.consultarEditoras = function () {
+                    $http.get('/Editora/ConsultarEditoras')
+                        .then(function (d) { //sucesso
+                            $scope.editoras = d.data;
+                        })
+                        .catch(function (e) { //erro
+                            $scope.mensagem = e.data;
+                        })
+                };
+
+                //função para executar a consulta de livros..
+                $scope.consultar = function () {
+
+                    $http.get('/Livro/ConsultarLivros')
+                        .then(function (d) {
+                            $scope.livros = d.data;
+                        })
+                        .catch(function (e) {
+                            $scope.mensagem = e.data;
+                        });
+                };
+
+                //criando uma função para buscar 1 livro pelo id..
+                $scope.obter = function (id) {
+
+                    //executando o método do controller..
+                    $http.get("/Livro/ObterLivro?idLivro=" + id)
+                        .then(function (obj) { //sucesso                            
+                            $scope.livro = obj.data;                           
+                        })
+                        .catch(function (e) { //erro
+                            $scope.mensagem = e.data;
+                        });
+                };
+
+                //criando uma função para excluir 1 livro pelo id..
+                $scope.excluir = function () {
+
+                    //executando o método do controller..
+                    $http.get("/Livro/ExcluirLivro?idLivro=" + $scope.livro.IdLivro)
+                        .then(function (obj) {
+                            //exibindo mensagem..
+                            $scope.mensagem = obj.data;
+
+                            //executando a consulta novamente..
+                            $scope.consultar();
+                        })
+                        .catch(function (e) {
+                            $scope.mensagem = e.data;
+                        });
+                };
+
+                //criando uma função para atualizar o livro..
+                $scope.atualizar = function () {
+
+                    $http.post("/Livro/AtualizarLivro", $scope.livro)
+                        .then(function (obj) {
+                            $scope.mensagem = obj.data;
+
+                            $scope.consultar();
+                        })
+                        .catch(function (e) {
+                            $scope.mensagem = e.data;
+                        });
+                };
+
+        });
+
+    </script>    
+    
+}
+
+<div ng-app="appLivro" ng-controller="consultaLivro">
+
+    <h4>Consulta de Livros</h4>
+    <br />
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="alert alert-info" ng-show="mensagem">
+                <strong>{{mensagem}}</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+
+            <div ng-init="consultar()">
+
+                <div class="card" ng-repeat="l in livros">                    
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-2">
+                                <img src="{{l.Foto}}" class="img-fluid"/>
+                            </div>
+                            <div class="col-md-10">
+                                <h3>{{l.Titulo}}</h3>
+                                Gênero: {{l.Genero}}
+                                <br/>
+                                {{l.Resumo}}
+                                <br />
+                                <br />
+                                Autor: {{l.IdAutor}}
+                                <br/>
+                                Editora: {{l.IdEditora}}
+                                <br/>
+                            </div>                            
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <button class="btn btn-primary btn-sm"
+                                data-target="#janelaedicao"
+                                data-toggle="modal"
+                                ng-click="obter(l.IdLivro)">
+                            Atualizar dados
+                        </button>
+                        <button class="btn btn-danger btn-sm"
+                                data-target="#janelaexclusao"
+                                data-toggle="modal"
+                                ng-click="obter(l.IdLivro)">
+                            Excluir Livro
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- JANELA DE EDIÇÃO -->
+    <div id="janelaedicao" class="modal fade">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary">
+                    <h4 class="text-white">Atualizar Livro</h4>
+                </div>
+                <div class="modal-body">
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+
+                            <label>Código do Livro:</label>
+                            <input type="text" class="form-control"
+                                   ng-model="livro.IdLivro" readonly="readonly"/>
+                            <br/>
+
+                            <label>Título do Livro:</label>
+                            <input type="text" class="form-control"
+                                   placeholder="Digite aqui"
+                                   ng-model="livro.Titulo" />
+                            <br />
+
+                            <label>Gênero:</label>
+                            <input type="text" class="form-control"
+                                   placeholder="Digite aqui"
+                                   ng-model="livro.Genero" />                            
+                            <br />
+
+                            <label>Resumo:</label>
+                            <textarea class="form-control" ng-model="livro.Resumo"></textarea>                            
+                            <br />
+
+                        </div>
+                        <div class="col-md-6">
+
+                            <label>Selecione o Autor:</label>
+                            <select class="form-control" ng-model="livro.IdAutor" ng-init="consultarAutores()">
+                                <option value="">Escolha uma Opção</option>
+                                <option value="{{a.IdAutor}}" ng-repeat="a in autores"
+                                        ng-selected="a.IdAutor == livro.IdAutor">
+                                    {{a.Nome}}
+                                </option>
+                            </select>
+                            <br />
+
+                            <label>Selecione a Editora:</label>
+                            <select class="form-control" ng-model="livro.IdEditora" ng-init="consultarEditoras()">
+                                <option value="">Escolha uma Opção</option>
+                                <option value="{{e.IdEditora}}" ng-repeat="e in editoras"
+                                        ng-selected="e.IdEditora == livro.IdEditora">
+                                    {{e.Nome}}
+                                </option>
+                            </select>
+                            <br />
+
+                            <label>URL da Imagem do Livro:</label>
+                            <input type="text" class="form-control" ng-model="livro.Foto" />                            
+                            <br />
+
+                        </div>
+                    </div>
+
+
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-warning" data-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-primary"
+                            ng-click="atualizar()"
+                            data-dismiss="modal">
+                        Atualizar Dados
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JANELA DE EXCLUSÃO -->
+    <div id="janelaexclusao" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger">
+                    <h4 class="text-white">Excluir Livro</h4>
+                </div>
+                <div class="modal-body">
+
+                    <p>
+                        Deseja realmente excluir este Livro?
+                    </p>
+
+                    <div class="text-center">
+
+                        <img src="{{livro.Foto}}" width="200"/>
+                        <br/>
+                        <br />
+                        <h4>{{livro.Titulo}}</h4>
+                        {{livro.Genero}}
+                        <br/>
+                        {{livro.Resumo}}
+
+                    </div>                    
+
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-warning" data-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-danger"
+                            ng-click="excluir()"
+                            data-dismiss="modal">
+                        Confirmar Exclusão
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+
+

@@ -1,0 +1,222 @@
+﻿
+@{
+    ViewBag.Pagina = "Consulta de Editoras";
+    Layout = "~/Views/Shared/Layout.cshtml";
+}
+
+
+@section Scripts{
+    <script>
+
+        //criando o programa angular..
+        var appEditora = angular.module('appEditora', []);
+        //criando o controller..
+        appEditora.controller('consultaEditora',
+            function ($scope, $http) {
+
+                //criando uma função para executar a consulta no controller..
+                $scope.consultar = function () {
+
+                    //executando o método do controller..
+                    $http.get("/Editora/ConsultarEditoras")
+                        .then(function (obj) {
+                            //armazenando em variavel..
+                            $scope.editoras = obj.data;
+                        })
+                        .catch(function (e) {
+                            $scope.mensagem = e.data;
+                        });
+                };
+
+                //criando uma função para buscar 1 editora pelo id..
+                $scope.obter = function (id) {
+
+                    //executando o método do controller..
+                    $http.get("/Editora/ObterEditora?idEditora=" + id)
+                        .then(function (obj) { //sucesso
+                            $scope.editora = obj.data;
+                        })
+                        .catch(function (e) { //erro
+                            $scope.mensagem = e.data;
+                        });
+                };
+
+                //criando uma função para excluir 1 editora pelo id..
+                $scope.excluir = function () {
+
+                    //executando o método do controller..
+                    $http.get("/Editora/ExcluirEditora?idEditora=" + $scope.editora.IdEditora)
+                        .then(function (obj) {
+                            //exibindo mensagem..
+                            $scope.mensagem = obj.data;
+
+                            //executando a consulta novamente..
+                            $scope.consultar();
+                        })
+                        .catch(function (e) {
+                            $scope.mensagem = e.data;
+                        });
+                };
+
+                //criando uma função para atualizar a editora..
+                $scope.atualizar = function () {
+
+                    $http.post("/Editora/AtualizarEditora", $scope.editora)
+                        .then(function (obj) {
+                            $scope.mensagem = obj.data;
+                            $scope.consultar();
+                        })
+                        .catch(function (e) {
+                            $scope.mensagem = e.data;
+                        });
+                };
+
+            });
+
+    </script>
+}
+
+<h4>Consulta de Editoras</h4>
+<br />
+
+<div class="row" ng-app="appEditora" ng-controller="consultaEditora">
+    <div class="col-md-12">
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="alert alert-info" ng-show="mensagem">
+                    <strong>{{mensagem}}</strong>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="row">
+            <div class="col-md-4">
+                <label>Pesquisar Editoras</label>
+                <input type="text" class="form-control"
+                       ng-model="Pesquisa"
+                       placeholder="Digite aqui" />
+            </div>
+            <div class="col-md-4">
+                <label>Ordenar por:</label>
+                <select class="form-control" ng-model="Ordenacao">
+                    <option value="">Escolha uma Opção</option>
+                    <option value="IdEditora">Código</option>
+                    <option value="Nome">Nome da Editora</option>
+                </select>
+            </div>
+        </div>
+
+        <br />
+
+        <table class="table table-bordered table-striped table-hover"
+               ng-init="consultar()">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Nome da Editora</th>
+                    <th>Operações</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                <tr ng-repeat="e in editoras | filter : Pesquisa | orderBy : Ordenacao">
+                    <td>{{e.IdEditora}}</td>
+                    <td>{{e.Nome}}</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm"
+                                data-target="#janelaedicao"
+                                data-toggle="modal"
+                                ng-click="obter(e.IdEditora)">
+                            Atualizar
+                        </button>
+                        <button class="btn btn-danger btn-sm"
+                                data-target="#janelaexclusao"
+                                data-toggle="modal"
+                                ng-click="obter(e.IdEditora)">
+                            Excluir
+                        </button>
+                    </td>
+                </tr>
+
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3">
+                        Quantidade de registros:
+                        {{(editoras | filter : Pesquisa).length}}
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <!-- JANELA DE EDIÇÃO -->
+        <div id="janelaedicao" class="modal fade">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary">
+                        <h4 class="text-white">Atualizar Editora</h4>
+                    </div>
+                    <div class="modal-body">
+
+                        <label>Código da Editora:</label>
+                        <input type="text" class="form-control"
+                               readonly="readonly"
+                               ng-model="editora.IdEditora" />
+                        <br />
+
+                        <label>Nome da Editora:</label>
+                        <input type="text" class="form-control"
+                               ng-model="editora.Nome" />
+                        <br />
+
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-warning" data-dismiss="modal">Cancelar</button>
+                        <button class="btn btn-primary"
+                                ng-click="atualizar()"
+                                data-dismiss="modal">
+                            Atualizar Dados
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- JANELA DE EXCLUSÃO -->
+        <div id="janelaexclusao" class="modal fade">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger">
+                        <h4 class="text-white">Excluir Editora</h4>
+                    </div>
+                    <div class="modal-body">
+
+                        <p>
+                            Deseja realmente excluir esta Editora?
+                        </p>
+
+                        Código da Editora: <strong>{{editora.IdEditora}}</strong>
+                        <br />
+
+                        Nome da Editora: <strong>{{editora.Nome}}</strong>
+                        <br />
+
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-warning" data-dismiss="modal">Cancelar</button>
+                        <button class="btn btn-danger"
+                                ng-click="excluir()"
+                                data-dismiss="modal">
+                            Confirmar Exclusão
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+</div>
+

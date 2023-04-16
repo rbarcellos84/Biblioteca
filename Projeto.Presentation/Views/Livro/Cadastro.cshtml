@@ -1,0 +1,183 @@
+﻿
+@{
+    ViewBag.Pagina = "Cadastro de Livros";
+    Layout = "~/Views/Shared/Layout.cshtml";
+}
+
+@section scripts{
+
+    <script>
+
+        //criando o programa angular..
+        var appLivro = angular.module('appLivro', []);
+        //criando o controller..
+        appLivro.controller('cadastroLivro',
+            function ($scope, $http) {
+
+                //JSON para resgatar os dados dos campos
+                //e enviar para a ViewModel
+                $scope.model = {
+                    Titulo: '',
+                    Genero: '',
+                    Resumo: '',
+                    Foto: '',
+                    IdAutor: '',
+                    IdEditora: ''
+                };
+
+                //função para realizar o cadastro do livro..
+                $scope.cadastrarLivro = function () {
+
+                    $scope.mensagem = "Processando, por favor aguarde.";
+
+                    //requisição ao controller..
+                    $http.post('/Livro/CadastrarLivro', $scope.model)
+                        .then(function (d) {
+
+                            $scope.mensagem = d.data; //mensagem de sucesso..
+
+                            $scope.ErroTitulo = '';
+                            $scope.ErroGenero = '';
+                            $scope.ErroResumo = '';
+                            $scope.ErroFoto = '';
+                            $scope.ErroAutor = '';
+                            $scope.ErroEditora = '';
+
+                            $scope.model.Titulo = '';
+                            $scope.model.Genero = '';
+                            $scope.model.Resumo = '';
+                            $scope.model.Foto = '';
+                            $scope.model.IdAutor = '';
+                            $scope.model.IdEditora = '';
+                        })
+                        .catch(function (e) {
+
+                            if (e.status == 400){ //validação..
+
+                                $scope.mensagem = "";
+
+                                $scope.ErroTitulo = e.data.Titulo;
+                                $scope.ErroGenero = e.data.Genero;
+                                $scope.ErroResumo = e.data.Resumo;
+                                $scope.ErroFoto = e.data.Foto;
+                                $scope.ErroAutor = e.data.IdAutor;
+                                $scope.ErroEditora = e.data.IdEditora;
+                            }
+                            else {
+                                $scope.mensagem = e.data;
+                            }
+                        });
+                };
+
+                //criando uma função para obter os autores..
+                $scope.consultarAutores = function () {
+                    $http.get('/Autor/ConsultarAutores')
+                        .then(function (d) { //sucesso
+                            $scope.autores = d.data;
+                        })
+                        .catch(function (e) { //erro
+                            $scope.mensagem = e.data; //mensagem de erro..
+                        });
+                };
+
+                //criando uma função para obter as editoras..
+                $scope.consultarEditoras = function () {
+                    $http.get('/Editora/ConsultarEditoras')
+                        .then(function (d) { //sucesso
+                            $scope.editoras = d.data;         
+                        })
+                        .catch(function (e) { //erro
+                            $scope.mensagem = e.data;
+                        })
+                };
+
+            });
+    </script>    
+    
+}
+
+<div ng-app="appLivro" ng-controller="cadastroLivro">
+
+    <h4>Formulário de Cadastro de Livro</h4>
+    <br />
+
+    <div class="row">
+        <div class="col-md-4">
+
+            <label>Título do Livro:</label>
+            <input type="text" class="form-control"
+                   placeholder="Digite aqui"
+                   ng-model="model.Titulo" />
+            <span class="text-danger">
+                {{ErroTitulo}}
+            </span>
+            <br />
+
+            <label>Gênero:</label>
+            <input type="text" class="form-control"
+                   placeholder="Digite aqui"
+                   ng-model="model.Genero" />
+            <span class="text-danger">
+                {{ErroGenero}}
+            </span>
+            <br />
+
+            <label>Resumo:</label>
+            <textarea class="form-control" ng-model="model.Resumo"></textarea>
+            <span class="text-danger">
+                {{ErroResumo}}
+            </span>
+            <br />
+
+        </div>
+        <div class="col-md-4">
+
+            <label>Selecione o Autor:</label>
+            <select class="form-control" ng-model="model.IdAutor" ng-init="consultarAutores()">
+                <option value="">Escolha uma Opção</option>
+                <option value="{{a.IdAutor}}" ng-repeat="a in autores">
+                    {{a.Nome}}
+                </option>
+            </select>
+            <span class="text-danger">
+                {{ErroAutor}}
+            </span>
+            <br />
+
+            <label>Selecione a Editora:</label>
+            <select class="form-control" ng-model="model.IdEditora" ng-init="consultarEditoras()">
+                <option value="">Escolha uma Opção</option>
+                <option value="{{e.IdEditora}}" ng-repeat="e in editoras">
+                    {{e.Nome}}
+                </option>
+            </select>
+            <span class="text-danger">
+                {{ErroEditora}}
+            </span>
+            <br />
+
+            <label>URL da Imagem do Livro:</label>
+            <input type="text" class="form-control" ng-model="model.Foto" />
+            <span class="text-danger">
+                {{ErroFoto}}
+            </span>
+            <br />
+
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+
+            <button class="btn btn-success" ng-click="cadastrarLivro()">
+                Cadastrar Livro
+            </button>
+            <br />
+            <br />
+
+            <strong>{{mensagem}}</strong>
+
+        </div>
+    </div>
+
+</div>

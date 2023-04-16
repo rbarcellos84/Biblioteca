@@ -1,0 +1,1 @@
+Este é um sistema simples criado com Asp.Net MVC, Model, AngularJs.Core, Ajax JavaScript, Json, Popper, banco de dados SqlServer e EntityFramework.

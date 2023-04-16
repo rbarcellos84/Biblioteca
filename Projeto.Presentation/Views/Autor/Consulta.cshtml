@@ -1,0 +1,224 @@
+﻿
+@{
+    ViewBag.Pagina = "Consulta de Autores";
+    Layout = "~/Views/Shared/Layout.cshtml";
+}
+
+@section Scripts{    
+    <script>
+
+        //criando o programa angular..
+        var appAutor = angular.module('appAutor', []);
+        //criando o controller..
+        appAutor.controller('consultaAutor',
+            function ($scope, $http) {
+
+                //criando uma função para executar a consulta no controller..
+                $scope.consultar = function () {
+
+                    //executando o método do controller..
+                    $http.get("/Autor/ConsultarAutores")
+                        .then(function (obj) {
+                            //armazenando em variavel..
+                            $scope.autores = obj.data;
+                        })
+                        .catch(function (e) {
+                            $scope.mensagem = e.data;
+                        });
+                };
+
+                //criando uma função para buscar 1 autor pelo id..
+                $scope.obter = function (id) {
+
+                    //executando o método do controller..
+                    $http.get("/Autor/ObterAutor?idAutor=" + id)
+                        .then(function (obj) { //sucesso
+                            $scope.autor = obj.data;
+                        })
+                        .catch(function (e) { //erro
+                            $scope.mensagem = e.data;
+                        });
+                };
+
+                //criando uma função para excluir 1 autor pelo id..
+                $scope.excluir = function () {
+
+                    //executando o método do controller..
+                    $http.get("/Autor/ExcluirAutor?idAutor=" + $scope.autor.IdAutor)
+                        .then(function (obj) {
+                            //exibindo mensagem..
+                            $scope.mensagem = obj.data;
+
+                            //executando a consulta novamente..
+                            $scope.consultar();
+                        })
+                        .catch(function (e) {
+                            $scope.mensagem = e.data;
+                        });
+                };
+
+                //criando uma função para atualizar o autor..
+                $scope.atualizar = function () {
+
+                    $http.post("/Autor/AtualizarAutor", $scope.autor)
+                        .then(function (obj) {
+                            $scope.mensagem = obj.data;
+                            $scope.consultar();
+                        })
+                        .catch(function (e) {
+                            $scope.mensagem = e.data;
+                        });
+                };
+
+            });
+
+    </script>        
+}
+
+<h4>Consulta de Autores</h4>
+<br/>
+
+<div ng-app="appAutor" ng-controller="consultaAutor">
+
+    <div class="row">
+        <div class="col-md-12">
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="alert alert-info" ng-show="mensagem">
+                        <strong>{{mensagem}}</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4">
+                    <label>Pesquisar Autores</label>
+                    <input type="text" class="form-control"
+                           ng-model="Pesquisa"
+                           placeholder="Digite aqui"/>
+                </div>
+                <div class="col-md-4">
+                    <label>Ordenar por:</label>
+                    <select class="form-control" ng-model="Ordenacao">
+                        <option value="">Escolha uma Opção</option>
+                        <option value="IdAutor">Código</option>
+                        <option value="Nome">Nome do Autor</option>
+                    </select>
+                </div>
+            </div>
+
+            <br/>
+
+            <table class="table table-bordered table-striped table-hover"
+                   ng-init="consultar()">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Nome do Autor</th>
+                        <th>Operações</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    <tr ng-repeat="a in autores | filter : Pesquisa | orderBy : Ordenacao">
+                        <td>{{a.IdAutor}}</td>
+                        <td>{{a.Nome}}</td>
+                        <td>
+                            <button class="btn btn-primary btn-sm"
+                                    data-target="#janelaedicao"
+                                    data-toggle="modal"
+                                    ng-click="obter(a.IdAutor)">
+                                Atualizar
+                            </button>
+
+                            <button class="btn btn-danger btn-sm"
+                                    data-target="#janelaexclusao"
+                                    data-toggle="modal"
+                                    ng-click="obter(a.IdAutor)">
+                                Excluir
+                            </button>
+                        </td>
+                    </tr>
+
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3">
+                            Quantidade de registros: 
+                            {{(autores | filter : Pesquisa).length}}
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <!-- JANELA DE EDIÇÃO -->
+            <div id="janelaedicao" class="modal fade">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary">
+                            <h4 class="text-white">Atualizar Autor</h4>
+                        </div>
+                        <div class="modal-body">
+
+                            <label>Código do Autor:</label>
+                            <input type="text" class="form-control"
+                                   readonly="readonly"
+                                   ng-model="autor.IdAutor"/>
+                            <br/>
+
+                            <label>Nome do Autor:</label>
+                            <input type="text" class="form-control"
+                                   ng-model="autor.Nome"/>
+                            <br/>
+
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-warning" data-dismiss="modal">Cancelar</button>
+                            <button class="btn btn-primary"
+                                    ng-click="atualizar()"
+                                    data-dismiss="modal">
+                                Atualizar Dados
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- JANELA DE EXCLUSÃO -->
+            <div id="janelaexclusao" class="modal fade">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header bg-danger">
+                            <h4 class="text-white">Excluir Autor</h4>
+                        </div>
+                        <div class="modal-body">
+
+                            <p>
+                                Deseja realmente excluir este Autor?
+                            </p>
+
+                            Código do Autor: <strong>{{autor.IdAutor}}</strong>
+                            <br/>
+
+                            Nome do Autor: <strong>{{autor.Nome}}</strong>
+                            <br/>
+
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-warning" data-dismiss="modal">Cancelar</button>
+                            <button class="btn btn-danger"
+                                    ng-click="excluir()"
+                                    data-dismiss="modal">
+                                Confirmar Exclusão
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+
+</div>

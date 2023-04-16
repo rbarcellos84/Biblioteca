@@ -1,0 +1,82 @@
+﻿
+@{
+    ViewBag.Pagina = "Cadastro de Editoras";
+    Layout = "~/Views/Shared/Layout.cshtml";
+}
+
+@section Scripts{
+    <script>
+
+        //criando e dando um nome a um programa angular
+        var appEditora = angular.module('appEditora', []);
+        //criando um controller para realizar o cadastro de editora
+        appEditora.controller('cadastroEditora',
+            function ($scope, $http) {
+
+                //declarar uma variável para resgatar o valor
+                //digitado no campo 'nome do autor'
+                $scope.model = { //JSON
+                    Nome : '' //vazio..
+                };
+
+                //criando uma função que será executada
+                //quando o botão de cadastro for clicado..
+                $scope.cadastrar = function () {
+
+                    //imprimindo mensagem..
+                    $scope.mensagem = "Processando, aguarde...";
+
+                    //requisição AJAX ao controller..
+                    $http.post('/Editora/CadastrarEditora', $scope.model)
+                        .then(function (obj) {
+
+                            //imprimir mensagem de sucesso..
+                            $scope.mensagem = obj.data;
+                            //limpar o conteudo do campo..
+                            $scope.model.Nome = "";
+                            $scope.ErroNome = "";
+                        })
+                        .catch(function (e) {
+
+                            if (e.status == 400){ //BadRequest
+                                //armazenar o erro do campo nome..
+                                $scope.ErroNome = e.data.Nome;
+                                $scope.mensagem = "";
+                            }
+                            else {
+                                //imprimir mensagem de erro..
+                                $scope.mensagem = "Erro: " + e.data;
+                            }
+                        });
+                };
+            });
+
+    </script>
+}
+
+<h4>Formulário de Cadastro de Editora</h4>
+<br />
+
+<div class="row" ng-app="appEditora" ng-controller="cadastroEditora">
+    <div class="col-md-4">
+
+        <label>Nome da Editora:</label>
+        <input type="text" class="form-control"
+               placeholder="Digite aqui"
+               ng-model="model.Nome" />
+        <span class="text-danger">
+            {{ErroNome}}
+        </span>
+        <br />
+
+        <button class="btn btn-success"
+                ng-click="cadastrar()">
+            Cadastrar Editora
+        </button>
+        <br/>
+        <br/>
+
+        <strong>{{mensagem}}</strong>
+
+    </div>
+</div>
